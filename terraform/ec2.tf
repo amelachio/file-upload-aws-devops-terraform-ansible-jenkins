@@ -17,3 +17,51 @@ data "aws_ami" "ubuntu" {
     values = ["hvm"]
   }
 }
+
+resource "aws_instance" "ansible" {
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = "t3.micro"
+  subnet_id              = aws_subnet.public.id
+  vpc_security_group_ids = [aws_security_group.ansible.id]
+  key_name               = aws_key_pair.deployer.key_name
+
+  tags = {
+    Name = "3tier-ansible-server"
+  }
+}
+
+resource "aws_instance" "frontend" {
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = "t3.micro"
+  subnet_id              = aws_subnet.public.id
+  vpc_security_group_ids = [aws_security_group.frontend.id]
+  key_name               = aws_key_pair.deployer.key_name
+
+  tags = {
+    Name = "3tier-frontend-server"
+  }
+}
+
+resource "aws_instance" "backend" {
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = "t3.micro"
+  subnet_id              = aws_subnet.private_backend.id
+  vpc_security_group_ids = [aws_security_group.backend.id]
+  key_name               = aws_key_pair.deployer.key_name
+
+  tags = {
+    Name = "3tier-backend-server"
+  }
+}
+
+resource "aws_instance" "database" {
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = "t3.micro"
+  subnet_id              = aws_subnet.private_db.id
+  vpc_security_group_ids = [aws_security_group.database.id]
+  key_name               = aws_key_pair.deployer.key_name
+
+  tags = {
+    Name = "3tier-database-server"
+  }
+}
