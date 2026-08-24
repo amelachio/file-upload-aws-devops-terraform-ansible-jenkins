@@ -1,0 +1,78 @@
+---
+- name: Configure frontend server
+  hosts: frontend
+  become: true
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: true
+
+    - name: Install Nginx and PHP-FPM
+      apt:
+        name:
+          - nginx
+          - php-fpm
+          - php-mysql
+        state: present
+
+    - name: Start and enable Nginx
+      service:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Start and enable PHP-FPM
+      service:
+        name: php8.3-fpm
+        state: started
+        enabled: true
+
+- name: Configure backend server
+  hosts: backend
+  become: true
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: true
+
+    - name: Install Nginx and PHP-FPM
+      apt:
+        name:
+          - nginx
+          - php-fpm
+          - php-mysql
+        state: present
+
+    - name: Start and enable Nginx
+      service:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Start and enable PHP-FPM
+      service:
+        name: php8.3-fpm
+        state: started
+        enabled: true
+
+- name: Configure database server
+  hosts: db
+  become: true
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: true
+
+    - name: Install MariaDB server
+      apt:
+        name: mariadb-server
+        state: present
+
+    - name: Start and enable MariaDB
+      service:
+        name: mariadb
+        state: started
+        enabled: true

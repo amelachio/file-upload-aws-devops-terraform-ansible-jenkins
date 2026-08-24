@@ -22,6 +22,7 @@ credentials.yml
 
 # Ansible
 *.retry
+ansible/inventory.ini
 
 # Divers
 .DS_Store
