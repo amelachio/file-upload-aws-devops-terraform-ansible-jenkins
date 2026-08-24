@@ -60,6 +60,8 @@
 - name: Configure database server
   hosts: db
   become: true
+  vars_files:
+    - vars/secrets.yml
 
   tasks:
     - name: Update apt cache
@@ -76,3 +78,23 @@
         name: mariadb
         state: started
         enabled: true
+    
+    - name: Install PyMySQL for Ansible MySQL modules
+      apt:
+        name: python3-pymysql
+        state: present
+
+    - name: Create application database
+      community.mysql.mysql_db:
+        name: "{{ db_name }}"
+        state: present
+        login_unix_socket: /run/mysqld/mysqld.sock
+
+    - name: Create application database user
+      community.mysql.mysql_user:
+        name: "{{ db_user }}"
+        password: "{{ db_password }}"
+        priv: "{{ db_name }}.*:ALL"
+        host: "%"
+        state: present
+        login_unix_socket: /run/mysqld/mysqld.sock
