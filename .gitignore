@@ -24,6 +24,9 @@ credentials.yml
 *.retry
 ansible/inventory.ini
 
+# Backend MariaDB
+backend/config.php
+
 # Divers
 .DS_Store
 *.log
