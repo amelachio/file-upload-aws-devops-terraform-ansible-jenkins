@@ -2,58 +2,48 @@
 - name: Configure frontend server
   hosts: frontend
   become: true
-
   tasks:
     - name: Update apt cache
       apt:
         update_cache: true
 
-    - name: Install Nginx and PHP-FPM
+    - name: Install Python, pip, venv and Nginx
       apt:
         name:
+          - python3
+          - python3-pip
+          - python3-venv
           - nginx
-          - php-fpm
-          - php-mysql
         state: present
 
     - name: Start and enable Nginx
       service:
         name: nginx
-        state: started
-        enabled: true
-
-    - name: Start and enable PHP-FPM
-      service:
-        name: php8.3-fpm
         state: started
         enabled: true
 
 - name: Configure backend server
   hosts: backend
   become: true
+    - vars/secrets.yml
 
   tasks:
     - name: Update apt cache
       apt:
         update_cache: true
 
-    - name: Install Nginx and PHP-FPM
+    - name: Install Python, pip, venv and Nginx
       apt:
         name:
+          - python3
+          - python3-pip
+          - python3-venv
           - nginx
-          - php-fpm
-          - php-mysql
         state: present
 
     - name: Start and enable Nginx
       service:
         name: nginx
-        state: started
-        enabled: true
-
-    - name: Start and enable PHP-FPM
-      service:
-        name: php8.3-fpm
         state: started
         enabled: true
 
@@ -62,7 +52,6 @@
   become: true
   vars_files:
     - vars/secrets.yml
-
   tasks:
     - name: Update apt cache
       apt:
@@ -72,7 +61,14 @@
       apt:
         name: mariadb-server
         state: present
-
+    
+    - name: Set MariaDB bind-address to allow remote connections
+      lineinfile:
+        path: /etc/mysql/mariadb.conf.d/50-server.cnf
+        regexp: '^bind-address\s*='
+        line: 'bind-address            = 0.0.0.0'
+      notify: Restart MariaDB
+ 
     - name: Start and enable MariaDB
       service:
         name: mariadb
@@ -98,3 +94,111 @@
         host: "%"
         state: present
         login_unix_socket: /run/mysqld/mysqld.sock
+
+    - name: Create files table
+      community.mysql.mysql_query:
+        login_db: "{{ db_name }}"
+        login_unix_socket: /run/mysqld/mysqld.sock
+        query: |
+          CREATE TABLE IF NOT EXISTS files (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            original_name VARCHAR(255) NOT NULL,
+            s3_key VARCHAR(255) NOT NULL,
+            file_type VARCHAR(100) NOT NULL,
+            uploaded_at DATETIME NOT NULL
+          )
+
+  handlers:
+    - name: Restart MariaDB
+      service:
+        name: mariadb
+        state: restarted
+
+- name: Configure Jenkins server
+  hosts: jenkins
+  become: true
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: true
+
+    - name: Check if swap is already active
+      command: swapon --show=NAME --noheadings
+      register: swap_check
+      changed_when: false
+
+    - name: Create swap file
+      command: fallocate -l 2G /swapfile
+      args:
+        creates: /swapfile
+      when: swap_check.stdout == ""
+
+    - name: Set swap file permissions
+      file:
+        path: /swapfile
+        mode: '0600'
+      when: swap_check.stdout == ""
+
+    - name: Format swap file
+      command: mkswap /swapfile
+      when: swap_check.stdout == ""
+
+    - name: Enable swap file
+      command: swapon /swapfile
+      when: swap_check.stdout == ""
+
+    - name: Add swap to fstab
+      lineinfile:
+        path: /etc/fstab
+        line: '/swapfile none swap sw 0 0'
+        state: present
+
+    - name: Install Java (required for Jenkins)
+      apt:
+        name: fontconfig
+        state: present
+
+    - name: Install OpenJDK 21
+      apt:
+        name: openjdk-21-jre
+        state: present
+
+    - name: Clean root GPG state (prevents corrupted keyring issues)
+      file:
+        path: /root/.gnupg
+        state: absent
+
+    - name: Create apt keyrings directory
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Download Jenkins GPG key
+      get_url:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
+        dest: /etc/apt/keyrings/jenkins-keyring.asc
+        mode: '0644'
+        force: true
+
+    - name: Add Jenkins apt repository
+      apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/"
+        state: present
+        filename: jenkins
+
+    - name: Update apt cache after adding Jenkins repo
+      apt:
+        update_cache: true
+
+    - name: Install Jenkins
+      apt:
+        name: jenkins
+        state: present
+
+    - name: Start and enable Jenkins
+      service:
+        name: jenkins
+        state: started
+        enabled: true

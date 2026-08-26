@@ -66,3 +66,15 @@ resource "aws_instance" "database" {
     Name = "3tier-database-server"
   }
 }
+
+resource "aws_instance" "jenkins" {
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = "t3.small"
+  subnet_id              = aws_subnet.public.id
+  vpc_security_group_ids = [aws_security_group.jenkins.id]
+  key_name               = aws_key_pair.deployer.key_name
+
+  tags = {
+    Name = "3tier-jenkins-server"
+  }
+}

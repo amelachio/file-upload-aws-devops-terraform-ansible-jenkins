@@ -78,6 +78,14 @@ resource "aws_security_group" "backend" {
   }
 
   ingress {
+    description     = "HTTP traffic from frontend only"
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    security_groups = [aws_security_group.frontend.id]
+  }
+
+  ingress {
     description     = "SSH from ansible server only"
     from_port       = 22
     to_port         = 22
@@ -127,5 +135,38 @@ resource "aws_security_group" "database" {
 
   tags = {
     Name = "3tier-database-sg"
+  }
+}
+
+resource "aws_security_group" "jenkins" {
+  name        = "3tier-jenkins-sg"
+  description = "Security group for Jenkins server"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description = "Jenkins web UI"
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "SSH from anywhere"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "3tier-jenkins-sg"
   }
 }
