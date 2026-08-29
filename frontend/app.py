@@ -49,3 +49,21 @@ def delete(file_id):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
+
+@app.route('/rename/<int:file_id>', methods=['POST'])
+def rename(file_id):
+    new_name = request.form.get('new_name')
+
+    if not new_name:
+        return redirect(url_for('index'))
+
+    try:
+        requests.put(
+            f"{config.BACKEND_URL}/files/{file_id}",
+            json={'filename': new_name},
+            timeout=5
+        )
+    except requests.RequestException:
+        pass
+
+    return redirect(url_for('index'))
