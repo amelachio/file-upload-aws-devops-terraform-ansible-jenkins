@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        FRONTEND_HOST = '10.0.1.206'
-        BACKEND_HOST  = '10.0.2.58'
+        FRONTEND_HOST = '10.0.1.179'
+        BACKEND_HOST  = '10.0.2.219'
     }
 
     stages {
