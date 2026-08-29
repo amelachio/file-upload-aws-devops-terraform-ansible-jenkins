@@ -9,7 +9,7 @@ Ce projet démontre un flux DevOps réaliste : **Terraform** (infrastructure) �
 
 ## 🏗️ Architecture
 
-![Architecture VPC](docs/screenshots/architecture-diagram.svg)
+![Architecture VPC](docs/screenshots/architecture-diagram.png)
 
 **Réseau (VPC `10.0.0.0/16`, région `ca-central-1`)**
 
@@ -103,6 +103,8 @@ Le déploiement est automatisé par Jenkins : chaque exécution du job `deploy-3
 | `PUT` | `/files/<id>` | Renomme un fichier (métadonnées uniquement) |
 | `DELETE` | `/files/<id>` | Supprime un fichier (S3 + base de données) |
 
+**Interface frontend** — en plus du formulaire d'upload, chaque fichier listé propose : consultation (clic sur le nom), **téléchargement direct**, **renommage**, et suppression.
+
 ---
 
 ## 🐛 Défis rencontrés et résolus
@@ -119,6 +121,7 @@ Cette section documente les problèmes réels rencontrés pendant la constructio
 - **Rotation de la clé de signature GPG de Jenkins** (fin 2025) : l'ancienne clé documentée était expirée, et un état GPG corrompu (`~/.gnupg`) sur le serveur — laissé par une tentative avortée d'import via serveur de clés — a nécessité un diagnostic manuel approfondi (`gpgv`, `apt-get -o Debug::Acquire::gpgv=true`) avant résolution.
 - **Security group mal aligné après migration Nginx** : le backend n'autorisait que le port `8080` alors que Nginx (port `80`) devenait le point d'entrée réel depuis le frontend.
 - **Jenkins bloqué par les security groups SSH** lors du premier déploiement automatisé — le security group Jenkins n'était pas encore autorisé sur backend/frontend, corrigé en ajoutant une règle dédiée.
+- **Remplacement forcé des 5 instances EC2 par Terraform** : le data source `aws_ami` (`most_recent = true`) a détecté une nouvelle version de l'AMI Ubuntu entre deux sessions de travail, provoquant la destruction et recréation automatique de toutes les instances — effaçant Jenkins, le code déployé, et la base de données. Corrigé en ajoutant `lifecycle { ignore_changes = [ami] }` sur chaque instance, et l'incident a servi de test grandeur nature de la reproductibilité de l'infrastructure : reconstruction complète en quelques dizaines de minutes depuis GitHub et Ansible, sans perte de code source. Le playbook Ansible a été enrichi à cette occasion pour rendre le provisioning applicatif (venv, config, systemd, Nginx) entièrement automatisé plutôt que partiellement manuel.
 
 ---
 
