@@ -22,9 +22,102 @@
         state: started
         enabled: true
 
+    - name: Create frontend application directory
+      file:
+        path: /var/www/frontend/templates
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+
+    - name: Create Python virtual environment for frontend
+      command: python3 -m venv /var/www/frontend/venv
+      args:
+        creates: /var/www/frontend/venv
+
+    - name: Install Python packages for frontend
+      pip:
+        name:
+          - flask
+          - requests
+          - gunicorn
+        virtualenv: /var/www/frontend/venv
+        virtualenv_command: python3 -m venv
+
+    - name: Deploy frontend config.py
+      copy:
+        dest: /var/www/frontend/config.py
+        owner: ubuntu
+        group: ubuntu
+        mode: '0644'
+        content: |
+          BACKEND_URL = "http://{{ groups['backend'][0] }}"
+
+    - name: Deploy frontend systemd service
+      copy:
+        dest: /etc/systemd/system/frontend.service
+        content: |
+          [Unit]
+          Description=Gunicorn instance for the file upload frontend
+          After=network.target
+
+          [Service]
+          User=ubuntu
+          Group=www-data
+          WorkingDirectory=/var/www/frontend
+          Environment="PATH=/var/www/frontend/venv/bin"
+          ExecStart=/var/www/frontend/venv/bin/gunicorn --workers 3 --bind 0.0.0.0:8080 app:app
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd daemon for frontend
+      systemd:
+        daemon_reload: true
+
+    - name: Enable frontend service
+      systemd:
+        name: frontend
+        enabled: true
+
+    - name: Deploy Nginx config for frontend
+      copy:
+        dest: /etc/nginx/sites-available/frontend
+        content: |
+          server {
+              listen 80;
+              server_name _;
+              client_max_body_size 20M;
+
+              location / {
+                  proxy_pass http://127.0.0.1:8080;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+          }
+
+    - name: Enable frontend Nginx site
+      file:
+        src: /etc/nginx/sites-available/frontend
+        dest: /etc/nginx/sites-enabled/frontend
+        state: link
+
+    - name: Remove default Nginx site (frontend)
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+
+    - name: Restart Nginx (frontend)
+      systemd:
+        name: nginx
+        state: restarted
+
 - name: Configure backend server
   hosts: backend
   become: true
+  vars_files:
     - vars/secrets.yml
 
   tasks:
@@ -46,6 +139,104 @@
         name: nginx
         state: started
         enabled: true
+
+    - name: Create backend application directory
+      file:
+        path: /var/www/backend
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+
+    - name: Create Python virtual environment for backend
+      command: python3 -m venv /var/www/backend/venv
+      args:
+        creates: /var/www/backend/venv
+
+    - name: Install Python packages for backend
+      pip:
+        name:
+          - flask
+          - boto3
+          - pymysql
+          - gunicorn
+        virtualenv: /var/www/backend/venv
+        virtualenv_command: python3 -m venv
+
+    - name: Deploy backend config.py
+      copy:
+        dest: /var/www/backend/config.py
+        owner: ubuntu
+        group: ubuntu
+        mode: '0644'
+        content: |
+          DB_HOST = "{{ groups['db'][0] }}"
+          DB_NAME = "{{ db_name }}"
+          DB_USER = "{{ db_user }}"
+          DB_PASSWORD = "{{ db_password }}"
+          S3_BUCKET = "file-upload-babe42bf"
+          S3_REGION = "ca-central-1"
+
+    - name: Deploy backend systemd service
+      copy:
+        dest: /etc/systemd/system/backend.service
+        content: |
+          [Unit]
+          Description=Gunicorn instance for the file upload backend
+          After=network.target
+
+          [Service]
+          User=ubuntu
+          Group=www-data
+          WorkingDirectory=/var/www/backend
+          Environment="PATH=/var/www/backend/venv/bin"
+          ExecStart=/var/www/backend/venv/bin/gunicorn --workers 3 --bind 0.0.0.0:8080 app:app
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: true
+
+    - name: Enable backend service
+      systemd:
+        name: backend
+        enabled: true
+
+    - name: Deploy Nginx config for backend
+      copy:
+        dest: /etc/nginx/sites-available/backend
+        content: |
+          server {
+              listen 80;
+              server_name _;
+              client_max_body_size 20M;
+
+              location / {
+                  proxy_pass http://127.0.0.1:8080;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+          }
+
+    - name: Enable backend Nginx site
+      file:
+        src: /etc/nginx/sites-available/backend
+        dest: /etc/nginx/sites-enabled/backend
+        state: link
+
+    - name: Remove default Nginx site
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+
+    - name: Restart Nginx
+      systemd:
+        name: nginx
+        state: restarted
 
 - name: Configure database server
   hosts: db
