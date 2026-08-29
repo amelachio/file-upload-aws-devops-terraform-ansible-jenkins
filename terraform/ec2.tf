@@ -25,6 +25,10 @@ resource "aws_instance" "ansible" {
   vpc_security_group_ids = [aws_security_group.ansible.id]
   key_name               = aws_key_pair.deployer.key_name
 
+  lifecycle {
+    ignore_changes = [ami]
+  }
+
   tags = {
     Name = "3tier-ansible-server"
   }
@@ -36,6 +40,10 @@ resource "aws_instance" "frontend" {
   subnet_id              = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.frontend.id]
   key_name               = aws_key_pair.deployer.key_name
+
+  lifecycle {
+    ignore_changes = [ami]
+  }
 
   tags = {
     Name = "3tier-frontend-server"
@@ -50,6 +58,10 @@ resource "aws_instance" "backend" {
   key_name               = aws_key_pair.deployer.key_name
   iam_instance_profile   = aws_iam_instance_profile.backend_profile.name  
 
+  lifecycle {
+    ignore_changes = [ami]
+  }
+
   tags = {
     Name = "3tier-backend-server"
   }
@@ -62,6 +74,10 @@ resource "aws_instance" "database" {
   vpc_security_group_ids = [aws_security_group.database.id]
   key_name               = aws_key_pair.deployer.key_name
 
+  lifecycle {
+    ignore_changes = [ami]
+  }
+
   tags = {
     Name = "3tier-database-server"
   }
@@ -73,6 +89,10 @@ resource "aws_instance" "jenkins" {
   subnet_id              = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.jenkins.id]
   key_name               = aws_key_pair.deployer.key_name
+  
+  lifecycle {
+    ignore_changes = [ami]
+  }  
 
   tags = {
     Name = "3tier-jenkins-server"
