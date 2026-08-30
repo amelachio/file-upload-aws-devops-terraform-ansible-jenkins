@@ -108,10 +108,16 @@ def update_file(file_id):
     try:
         connection = get_connection()
         with connection.cursor() as cursor:
-            cursor.execute("SELECT id FROM files WHERE id = %s", (file_id,))
-            if cursor.fetchone() is None:
+            cursor.execute("SELECT original_name FROM files WHERE id = %s", (file_id,))
+            row = cursor.fetchone()
+            if row is None:
                 connection.close()
                 return jsonify({'error': 'File not found'}), 404
+
+            old_name = row[0]
+            if '.' in old_name and '.' not in new_name:
+                extension = old_name.rsplit('.', 1)[1]
+                new_name = f"{new_name}.{extension}"
 
             cursor.execute(
                 "UPDATE files SET original_name = %s WHERE id = %s",

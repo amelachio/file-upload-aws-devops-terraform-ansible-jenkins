@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for
+from urllib.parse import quote
+from flask import Flask, render_template, request, redirect, url_for, Response
 import requests
 
 import config
@@ -11,6 +12,8 @@ def index():
     try:
         response = requests.get(f"{config.BACKEND_URL}/files", timeout=5)
         files = response.json().get('files', [])
+        for f in files:
+            f['download_link'] = f"/download?url={quote(f['url'])}&name={quote(f['filename'])}"
     except requests.RequestException:
         files = []
 
@@ -67,3 +70,23 @@ def rename(file_id):
         pass
 
     return redirect(url_for('index'))
+
+
+@app.route('/download')
+def download():
+    file_url = request.args.get('url')
+    filename = request.args.get('name', 'file')
+
+    if not file_url:
+        return redirect(url_for('index'))
+
+    try:
+        r = requests.get(file_url, stream=True, timeout=10)
+    except requests.RequestException:
+        return redirect(url_for('index'))
+
+    return Response(
+        r.iter_content(chunk_size=8192),
+        content_type=r.headers.get('Content-Type', 'application/octet-stream'),
+        headers={'Content-Disposition': f'attachment; filename="{filename}"'}
+    )
