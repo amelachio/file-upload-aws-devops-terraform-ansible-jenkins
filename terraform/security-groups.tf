@@ -24,7 +24,7 @@ resource "aws_security_group" "frontend" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["132.210.219.15/32"]
+    cidr_blocks = ["38.15.87.231/32"]
   }
 
   ingress {
@@ -65,7 +65,7 @@ resource "aws_security_group" "ansible" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["132.210.219.15/32"]
+    cidr_blocks = ["38.15.87.231/32"]
   }
 
   egress {
@@ -180,7 +180,7 @@ resource "aws_security_group" "jenkins" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["132.210.219.15/32"]
+    cidr_blocks = ["38.15.87.231/32"]
   }
 
   egress {
