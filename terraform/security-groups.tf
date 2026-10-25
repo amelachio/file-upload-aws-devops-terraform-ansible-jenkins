@@ -176,6 +176,14 @@ resource "aws_security_group" "jenkins" {
   }
 
   ingress {
+    description     = "SSH from ansible server"
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ansible.id]
+  }
+
+  ingress {
     description = "SSH from anywhere"
     from_port   = 22
     to_port     = 22
