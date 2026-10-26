@@ -393,3 +393,8 @@
         name: jenkins
         state: started
         enabled: true
+
+    - name: Install python3-venv for CI tests
+      apt:
+        name: python3.12-venv
+        state: present
