@@ -85,7 +85,7 @@ def list_files():
     files = [
         {
             'id': row[0],
-            'filename': row[0],
+            'filename': row[1],
             'url': f"https://{CLOUDFRONT_DOMAIN}/{row[2]}",
             'file_type': row[3],
             'uploaded_at': row[4].isoformat()
