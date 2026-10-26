@@ -31,3 +31,6 @@ backend/config.py
 # Divers
 .DS_Store
 *.log
+.venv/
+__pycache__/
+.pytest_cache/
