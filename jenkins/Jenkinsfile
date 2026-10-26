@@ -13,6 +13,18 @@ pipeline {
             }
         }
 
+        stage('Test') {
+            steps {
+                sh '''
+                    python3 -m venv .venv
+                    .venv/bin/pip install -r backend/requirements-dev.txt
+                    cd backend
+                    ../.venv/bin/flake8
+                    ../.venv/bin/pytest
+                '''
+            }
+        }
+
         stage('Deploy Backend') {
             steps {
                 sshagent(credentials: ['aws-3tier-key']) {
