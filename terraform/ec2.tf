@@ -89,7 +89,12 @@ resource "aws_instance" "jenkins" {
   subnet_id              = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.jenkins.id]
   key_name               = aws_key_pair.deployer.key_name
-  
+
+  root_block_device {
+    volume_size = 12
+    volume_type = "gp3"
+  }
+
   lifecycle {
     ignore_changes = [ami]
   }  
