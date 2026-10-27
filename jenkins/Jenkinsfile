@@ -54,7 +54,7 @@ pipeline {
                     sh """
                         sleep 10
                         for i in 1 2 3 4 5; do
-                            code=\$(ssh -o StrictHostKeyChecking=no ubuntu@${BACKEND_HOST} 'curl -s -o /dev/null --max-time 5 -w "%{http_code}" http://127.0.0.1/files') || true
+                            code=\$(ssh -o StrictHostKeyChecking=no ubuntu@${BACKEND_HOST} 'curl -s -o /dev/null --max-time 5 -w "%{http_code}" http://127.0.0.1/inexistant') || true
                             echo "Backend: HTTP \$code (essai \$i)"
                             [ "\$code" = "200" ] && break
                             [ "\$i" = "5" ] && exit 1
