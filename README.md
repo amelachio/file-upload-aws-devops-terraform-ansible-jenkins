@@ -62,3 +62,4 @@ Au-delà de la mise en place initiale, ce projet a demandé de résoudre plusieu
 
 Anicet Melachio
 Ingénieur Infrastructure — Maîtrise en cybersécurité, Université de Sherbrooke
+
