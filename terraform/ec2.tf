@@ -32,6 +32,11 @@ resource "aws_instance" "ansible" {
   tags = {
     Name = "3tier-ansible-server"
   }
+
+  metadata_options {
+    http_tokens = "required"
+  }
+
 }
 
 resource "aws_instance" "frontend" {
@@ -48,6 +53,11 @@ resource "aws_instance" "frontend" {
   tags = {
     Name = "3tier-frontend-server"
   }
+
+  metadata_options {
+    http_tokens = "required"
+  }
+
 }
 
 resource "aws_instance" "backend" {
@@ -65,6 +75,11 @@ resource "aws_instance" "backend" {
   tags = {
     Name = "3tier-backend-server"
   }
+
+  metadata_options {
+    http_tokens = "required"
+  }
+
 }
 
 resource "aws_instance" "database" {
@@ -81,7 +96,13 @@ resource "aws_instance" "database" {
   tags = {
     Name = "3tier-database-server"
   }
+
+  metadata_options {
+    http_tokens = "required"
+  }
+
 }
+
 
 resource "aws_instance" "jenkins" {
   ami                    = data.aws_ami.ubuntu.id
@@ -102,4 +123,9 @@ resource "aws_instance" "jenkins" {
   tags = {
     Name = "3tier-jenkins-server"
   }
+
+  metadata_options {
+    http_tokens = "required"
+  }
+
 }
