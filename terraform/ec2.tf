@@ -56,7 +56,7 @@ resource "aws_instance" "backend" {
   subnet_id              = aws_subnet.private_backend.id
   vpc_security_group_ids = [aws_security_group.backend.id]
   key_name               = aws_key_pair.deployer.key_name
-  iam_instance_profile   = aws_iam_instance_profile.backend_profile.name  
+  iam_instance_profile   = aws_iam_instance_profile.backend_profile.name
 
   lifecycle {
     ignore_changes = [ami]
@@ -97,7 +97,7 @@ resource "aws_instance" "jenkins" {
 
   lifecycle {
     ignore_changes = [ami]
-  }  
+  }
 
   tags = {
     Name = "3tier-jenkins-server"
