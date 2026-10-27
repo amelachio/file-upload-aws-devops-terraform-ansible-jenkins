@@ -184,7 +184,7 @@ resource "aws_security_group" "jenkins" {
   }
 
   ingress {
-    description = "SSH from anywhere"
+    description = "SSH from my IP only"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
