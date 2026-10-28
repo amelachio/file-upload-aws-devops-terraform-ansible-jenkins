@@ -398,3 +398,40 @@
       apt:
         name: python3.12-venv
         state: present
+    
+    - name: Download CloudWatch agent package
+      get_url:
+        url: https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
+        dest: /tmp/amazon-cloudwatch-agent.deb
+        mode: '0644'
+
+    - name: Install CloudWatch agent
+      apt:
+        deb: /tmp/amazon-cloudwatch-agent.deb
+        state: present
+
+    - name: Deploy CloudWatch agent config (disk usage)
+      copy:
+        dest: /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+        mode: '0644'
+        content: |
+          {
+            "metrics": {
+              "append_dimensions": {
+                "InstanceId": "${aws:InstanceId}"
+              },
+              "metrics_collected": {
+                "disk": {
+                  "measurement": ["used_percent"],
+                  "resources": ["/"],
+                  "metrics_collection_interval": 60
+                }
+              }
+            }
+          }
+
+    - name: Start CloudWatch agent with this config
+      command: >
+        /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl
+        -a fetch-config -m ec2 -s
+        -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
