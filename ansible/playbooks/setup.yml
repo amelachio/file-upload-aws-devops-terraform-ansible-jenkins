@@ -435,3 +435,27 @@
         /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl
         -a fetch-config -m ec2 -s
         -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+    
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Ensure Docker service is running
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Add jenkins user to docker group
+      user:
+        name: jenkins
+        groups: docker
+        append: true
+      register: jenkins_docker_group
+
+    - name: Restart Jenkins to apply group change
+      service:
+        name: jenkins
+        state: restarted
+      when: jenkins_docker_group.changed    
