@@ -25,6 +25,16 @@ pipeline {
             }
         }
 
+        stage('Build Images') {
+            steps {
+                sh '''
+                    docker build -t file-backend:${BUILD_NUMBER} backend
+                    docker build -t file-frontend:${BUILD_NUMBER} frontend
+                    docker rmi file-backend:${BUILD_NUMBER} file-frontend:${BUILD_NUMBER} || true
+                '''
+            }
+        }
+
         stage('Deploy Backend') {
             steps {
                 sshagent(credentials: ['aws-3tier-key']) {
