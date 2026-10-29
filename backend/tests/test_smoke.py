@@ -1,2 +1,2 @@
 def test_application_demarre(client):
-    assert client is None
+    assert client is not None
